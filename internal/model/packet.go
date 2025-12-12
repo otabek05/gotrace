@@ -1,16 +1,22 @@
 package model
 
 type LayerInfo struct {
-	Name   string `json:"name"`
-	Fields map[string]string  `json:"fields"`
+	Fields  map[string]string `json:"fields,omitempty"`
+	Payload *LayerInfo        `json:"payload,omitempty"`
 }
 
+
 type ParsedPacket struct {
-	Timestamp int64       `json:"timestamp"`
-	Src       string      `json:"src"`
-	Dst       string      `json:"dst"`
-	Protocol  string      `json:"protocol"`
-	Length    int         `json:"length"`
-	Layers    []LayerInfo `json:"layers"`
-	Raw       []byte      `json:"raw"`
+    Ethernet *Ethernet `json:"ethernet,omitempty"`
+    IPv4     *IPv4     `json:"ipv4,omitempty"`
+    IPv6     *IPv6     `json:"ipv6,omitempty"`
+    TCP      *TCP      `json:"tcp,omitempty"`
+    UDP      *UDP      `json:"udp,omitempty"`
+    ICMP     *ICMP     `json:"icmp,omitempty"`
+    ARP      *ARP      `json:"arp,omitempty"`
+    DNS      *DNS      `json:"dns,omitempty"`
+    HTTP     *HTTP     `json:"http,omitempty"`
+    HTTPS    *HTTPS    `json:"https,omitempty"`
+    DHCP     *DHCP     `json:"dhcp,omitempty"`
+    App      *AppLayer `json:"application,omitempty"`
 }

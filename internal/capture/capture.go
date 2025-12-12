@@ -1,12 +1,12 @@
 package capture
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"gotrace/internal/model"
-	"gotrace/internal/parser/ethernet"
-	"gotrace/internal/parser/ipv4"
-	"gotrace/internal/parser/tcp"
+	"gotrace/internal/parser"
+	"strings"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -14,20 +14,16 @@ import (
 )
 
 type Engine struct {
-	handle    *pcap.Handle
-	packet    chan gopacket.Packet
-	ethParser *ethernet.EthernetParser
-	ipParser *ipv4.IPV4Parser
-	tcpParser *tcp.TCPParser
+	handle *pcap.Handle
+	packet chan gopacket.Packet
+	parser *parser.PacketParser
 }
 
 func New() *Engine {
 
 	return &Engine{
-		packet:    make(chan gopacket.Packet, 200),
-		tcpParser: tcp.New(),
-		ethParser: ethernet.New(),
-		ipParser:  ipv4.Net(),
+		packet: make(chan gopacket.Packet, 200),
+		parser: parser.New(),
 	}
 }
 
@@ -41,6 +37,7 @@ func (e *Engine) Start(wsChan *chan []byte) error {
 	}
 
 	e.handle = h
+	e.handle.SetBPFFilter("tcp and port 80")
 	go e.loop(wsChan)
 
 	return nil
@@ -49,15 +46,47 @@ func (e *Engine) Start(wsChan *chan []byte) error {
 func (e *Engine) loop(wsChan *chan []byte) {
 	src := gopacket.NewPacketSource(e.handle, e.handle.LinkType())
 	for p := range src.Packets() {
+		var parsedLayers model.ParsedPacket
+
+		fmt.Println(p)
 		if ethLayer := p.Layer(layers.LayerTypeEthernet); ethLayer != nil {
 			eth := ethLayer.(*layers.Ethernet)
-			send(wsChan, e.ethParser.Parse(eth))
+			e.parser.ParseEthernet(eth, &parsedLayers)
 		}
 
 		if ipLayer := p.Layer(layers.LayerTypeIPv4); ipLayer != nil {
 			ip := ipLayer.(*layers.IPv4)
-			send(wsChan, e.ipParser.Parse(ip))
+			e.parser.ParseIPv4(ip, &parsedLayers)
 		}
+
+		if tcpLayer := p.Layer(layers.LayerTypeTCP); tcpLayer != nil {
+			tcp := tcpLayer.(*layers.TCP)
+			e.parser.ParseTCP(tcp, &parsedLayers)
+		}
+
+		if udpLayer := p.Layer(layers.LayerTypeUDP); udpLayer != nil {
+			udp := udpLayer.(*layers.UDP)
+			e.parser.ParseUDP(udp, &parsedLayers)
+		}
+
+		if dnsLayer := p.Layer(layers.LayerTypeDNS); dnsLayer != nil {
+			dns := dnsLayer.(*layers.DNS)
+			e.parser.ParseDNS(dns, &parsedLayers)
+		}
+
+		if app := p.ApplicationLayer(); app != nil {
+			payload := app.Payload()
+			if isHTTPPayload(payload) {
+				e.parser.ParseHTTP(payload, &parsedLayers)
+			}
+		}
+
+		var buf bytes.Buffer
+		enc := json.NewEncoder(&buf)
+		enc.SetEscapeHTML(false)
+		enc.Encode(parsedLayers)
+		
+		*wsChan <- buf.Bytes()
 
 	}
 }
@@ -68,8 +97,13 @@ func (e *Engine) Stop() {
 	}
 }
 
-func send(wsChan *chan []byte, data *model.LayerInfo) {
-	jsonData, _ := json.Marshal(data)
-	fmt.Println(data)
-	*wsChan <- jsonData
+func isHTTPPayload(b []byte) bool {
+	s := string(b)
+	return strings.HasPrefix(s, "GET ") ||
+		strings.HasPrefix(s, "POST ") ||
+		strings.HasPrefix(s, "PUT ") ||
+		strings.HasPrefix(s, "DELETE ") ||
+		strings.HasPrefix(s, "HEAD ") ||
+		strings.HasPrefix(s, "OPTIONS ") ||
+		strings.HasPrefix(s, "HTTP/")
 }
