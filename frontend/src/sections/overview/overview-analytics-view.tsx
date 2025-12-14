@@ -1,177 +1,227 @@
 import {
   Box,
   Typography,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Paper,
   Button,
-  Collapse,
   IconButton,
-  Divider,
+
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useWebSocket } from "src/hook/WebsocketContext";
-import { MessageType, NetworkLayer, TrafficOptions, TransportLayer } from "src/types/ws_sending";
-import { Icon } from "@iconify/react";
+import {
+  ApplicationLayer,
+  MessageType,
+  NetworkLayer,
+  TrafficOptions,
+  TransportLayer,
+} from "src/types/ws_sending";
 import { PacketItem } from "./layers";
+import { CustomSelect } from "src/components/option/CustomSelect";
+import { applicationLayerOptions, networkLayerOptions, Service, trafficOptions, transportLayerOptions, wellKnownServicesOptions } from "src/constansts/capture";
+import { ServiceSelect } from "./service_select";
+import { Iconify } from "src/components/iconify";
+import SearchInputWithButton from "src/components/option/SearchInput";
+import { validatePort } from "src/utils/valid_port";
 
-interface CollapsibleItemProps {
-  data: any;
-  label?: string;
-  level?: number;
-}
-
-const CollapsibleItem = ({ data, label, level = 0 }: CollapsibleItemProps) => {
-  const [open, setOpen] = useState(false); // default closed
-
-  const isObject = typeof data === "object" && data !== null;
-
-  return (
-    <Box sx={{ pl: level * 2, width: "100%" }}>
-      <Button
-        fullWidth
-        variant="text"
-        onClick={() => setOpen(!open)}
-        endIcon={
-          <Icon icon={open ? "solar:chevron-up-bold" : "solar:chevron-down-bold"} />
-        }
-        sx={{
-          justifyContent: "space-between",
-          textTransform: "none",
-          color: "inherit",
-          py: 1,
-        }}
-      >
-        {label ? `${label}${!isObject ? `: ${data}` : ""}` : String(data)}
-      </Button>
-
-      {isObject && (
-        <Collapse in={open} timeout="auto" unmountOnExit>
-          {Object.entries(data).map(([key, value]) => (
-            <CollapsibleItem key={key} data={value} label={key} level={level + 1} />
-          ))}
-        </Collapse>
-      )}
-
-      {/* Divider between items */}
-      {level === 0 && <Divider sx={{ my: 0.5, bgcolor: "#30363d" }} />}
-    </Box>
-  );
-};
 
 export default function OverviewAnalyticsView() {
   const { connected, messages, send, connect, clearMessages } = useWebSocket();
-
   const [trafficOption, setTrafficOption] = useState<TrafficOptions>(TrafficOptions.Both);
   const [networkLayer, setNetworkLayer] = useState<NetworkLayer>(NetworkLayer.Unknown);
   const [transportLayer, setTransportLayer] = useState<TransportLayer>(TransportLayer.Unknown);
+  const [applicationLayer, setApplicationLayer] = useState<ApplicationLayer>(ApplicationLayer.Any)
+  const [selectedServices, setSelectedServices] = useState<Service[]>([])
+  const [customInput, setCustomInput] = useState<string>("")
 
-  const handleApply = () => {
-    send({
-      type: MessageType.StartCapturing,
-      message: {},
-      trafficOptions: trafficOption,
-      networkLayer: networkLayer,
-      transport: transportLayer,
-      isOutgoing: true,
-    });
-  };
 
   useEffect(() => {
     connect("ws://localhost:8080/ws");
   }, []);
 
+  const handleApply = () => {
+    send({
+      type: MessageType.StartCapturing,
+      trafficOptions: trafficOption,
+      networkLayer,
+      transport: transportLayer,
+      services: "",
+      isOutgoing: true,
+    });
+  };
+
+
+  const addService = (service: Service) => {
+    if (selectedServices.length >= 10) {
+      alert("Maximum of 10 application filters allowed.");
+      return;
+    }
+
+    if (!validatePort(service.value)) {
+      return
+    }
+
+    setSelectedServices((prev) => {
+      const exist = prev.some((s) => s.value === service.value)
+
+      if (!exist) {
+        return [...prev, service]
+      }
+
+      return prev
+    })
+  }
+
+
+  const removeService = (service: Service) => {
+    setSelectedServices((prev) => prev.filter((s) => s.value !== service.value))
+  }
+
+  const onSearch = () => {
+    const newService: Service = {
+      label: customInput,
+      value: customInput
+    }
+
+    addService(newService)
+    setCustomInput("")
+  }
+
   return (
-    <Box sx={{ p: 2, height: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", gap: 2 }}>
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel>Traffic</InputLabel>
-          <Select
-            value={trafficOption}
-            label="Traffic"
-            onChange={(e) => setTrafficOption(e.target.value as TrafficOptions)}
-          >
-            <MenuItem value={TrafficOptions.Incoming}>Incoming</MenuItem>
-            <MenuItem value={TrafficOptions.Outgoing}>Outgoing</MenuItem>
-            <MenuItem value={TrafficOptions.Both}>Both</MenuItem>
-          </Select>
-        </FormControl>
+    <Box sx={{ p: 2, display: "flex", flexDirection: "column" }}>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          flexWrap: "wrap",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          pb: 2,
+        }}
+      >
 
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel>Network Layer</InputLabel>
-          <Select
-            value={networkLayer}
-            label="Network Layer"
-            onChange={(e) => setNetworkLayer(e.target.value as NetworkLayer)}
-          >
-            <MenuItem value={NetworkLayer.IPv4}>IPv4</MenuItem>
-            <MenuItem value={NetworkLayer.IPv6}>IPv6</MenuItem>
-            <MenuItem value={NetworkLayer.ICMP}>ICMP</MenuItem>
-            <MenuItem value={NetworkLayer.Unknown}>Any</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel>Transport</InputLabel>
-          <Select
-            value={transportLayer}
-            label="Transport"
-            onChange={(e) => setTransportLayer(e.target.value as TransportLayer)}
-          >
-            <MenuItem value={TransportLayer.TCP}>TCP</MenuItem>
-            <MenuItem value={TransportLayer.UDP}>UDP</MenuItem>
-            <MenuItem value={TransportLayer.Unknown}>Any</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Box
-          onClick={handleApply}
-          sx={{
-            px: 3,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 1,
-            bgcolor: "primary.main",
-            color: "white",
-            cursor: "pointer",
+        <CustomSelect
+          label="Traffic"
+          options={trafficOptions}
+          value={trafficOption}
+          onChange={(val) => {
+            setTrafficOption(val as TrafficOptions)
           }}
-        >
-          Apply
-        </Box>
+        />
 
-        <Button variant="outlined" color="secondary" onClick={clearMessages} sx={{ ml: 2 }}>
+
+        <CustomSelect
+          label="Network"
+          options={networkLayerOptions}
+          value={networkLayer}
+          onChange={(val) => {
+            setNetworkLayer(val as NetworkLayer)
+          }}
+        />
+
+        <CustomSelect
+          label="Transport"
+          options={transportLayerOptions}
+          value={transportLayer}
+          onChange={(val) => {
+            setTransportLayer(val as TransportLayer)
+          }}
+        />
+
+        <CustomSelect
+          label="Application"
+          options={applicationLayerOptions}
+          value={applicationLayer}
+          onChange={(val) => {
+            setApplicationLayer(val)
+          }}
+        />
+
+        {applicationLayer === ApplicationLayer.WellKnown ? (
+          <>
+            <ServiceSelect
+              selectedServices={selectedServices}
+              addService={addService}
+              options={wellKnownServicesOptions} />
+          </>
+        )
+          : applicationLayer == ApplicationLayer.Custom ? (
+            <>
+
+              <SearchInputWithButton onChange={(val) => { setCustomInput(val) }} onSearch={onSearch} value={customInput} />
+            </>
+          ) : null}
+
+
+        <Button variant="contained" onClick={handleApply}>
+          Apply
+        </Button>
+
+        <Button variant="outlined" onClick={clearMessages}>
           Clear
         </Button>
+      </Box>
+
+      <Box>
+        {selectedServices.length > 0 && (
+          <>
+            <Box mt={2} display="flex" flexWrap="wrap" gap={1}>
+              {selectedServices.map((service) => (
+                <Box
+                  key={service.value}
+                  display="flex"
+                  alignItems="center"
+                  bgcolor="grey.200"
+                  px={1}
+                  py={0.5}
+                  borderRadius={1}
+                >
+                  <Typography variant="body2">{service.label}</Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => removeService(service)}
+                    sx={{ ml: 0.5 }}
+                  >
+                    <Iconify icon={"solar:close-square-bold"} />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          </>
+        )}
+
       </Box>
 
       <Typography variant="body2" sx={{ mt: 1, opacity: 0.6 }}>
         WebSocket Status: {connected ? "🟢 Connected" : "🔴 Disconnected"}
       </Typography>
 
+      {/* PACKETS */}
       <Paper
         sx={{
           p: 2,
           mt: 1,
           flexGrow: 1,
+          maxHeight: "75vh",
           overflowY: "auto",
           bgcolor: "#0d1117",
           color: "#c9d1d9",
           borderRadius: 2,
           border: "1px solid #30363d",
           fontFamily: "monospace",
+          "&::-webkit-scrollbar": { display: "none" },
         }}
       >
         {messages.length === 0 ? (
-          <Typography sx={{ color: "#8b949e" }}>No packets yet...</Typography>
+          <Typography sx={{ color: "#8b949e" }}>
+            No packets yet...
+          </Typography>
         ) : (
-          messages.map((msg, idx) => <PacketItem key={idx} packet={msg} />)
+          messages.map((msg, idx) => (
+            <PacketItem key={idx} packet={msg} index={idx} />
+          ))
         )}
-
       </Paper>
     </Box>
   );
 }
-

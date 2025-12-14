@@ -17,7 +17,7 @@ export interface ParsedPacket {
   dhcp?: DHCP;
   application?: AppLayer;
   direction: string 
-  time:string
+  timestamp:string
 }
 
 export interface Ethernet {

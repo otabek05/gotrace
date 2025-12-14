@@ -26,6 +26,12 @@ export enum TransportLayer {
   Unknown = "unknown",
 }
 
+export enum  ApplicationLayer {
+  Any = "any",
+  WellKnown = "well-known",
+  Custom = "custom"
+}
+
 export interface WSOutgoingMessage {
   type: MessageType;
   message?: any;
@@ -33,6 +39,7 @@ export interface WSOutgoingMessage {
   trafficOptions?: TrafficOptions;
   networkLayer?: NetworkLayer;
   transport?: TransportLayer;
+  services:any;
 
   isOutgoing: true;
 }
@@ -44,6 +51,5 @@ export interface WSIncomingMessage {
   trafficOptions: string;
   networkLayer: string;
   transport: string;
-
   isOutgoing?: false;
 }

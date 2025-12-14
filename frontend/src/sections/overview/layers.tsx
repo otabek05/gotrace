@@ -1,10 +1,7 @@
 import {
   Box,
   Typography,
-  Paper,
-  Button,
   Collapse,
-  IconButton,
   Divider,
 } from "@mui/material";
 import { useState } from "react";
@@ -13,27 +10,37 @@ import { ParsedPacket } from "src/types/ws_receiving";
 
 interface PacketItemProps {
   packet: ParsedPacket;
+  index: number;
 }
 
 const LayerItem = ({ label, data }: { label: string; data: any }) => {
   const [open, setOpen] = useState(false);
   const isObject = typeof data === "object" && data !== null;
+  const directionIcon = open ? "material-symbols:arrow-downward" : "material-symbols:arrow-upward";
 
   return (
     <Box sx={{ width: "100%", pl: 2 }}>
-      <Button
-        fullWidth
-        variant="text"
+      <Box
         onClick={() => setOpen(!open)}
-        endIcon={
-          isObject ? (
-            <Icon icon={open ? "solar:chevron-up-bold" : "solar:chevron-down-bold"} />
-          ) : undefined
-        }
-        sx={{ justifyContent: "space-between", textTransform: "none", color: "inherit", py: 0.5 }}
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          cursor: "pointer",
+          color: "inherit",
+          py: 0.5,
+        }}
       >
-        {label}{!isObject ? `: ${data}` : ""}
-      </Button>
+
+        {isObject && (
+          <>
+            <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+              {label.toUpperCase()}
+            </Typography>
+            <Icon icon={directionIcon} />
+          </>
+        )}
+      </Box>
 
       {isObject && (
         <Collapse in={open} timeout="auto" unmountOnExit>
@@ -42,43 +49,145 @@ const LayerItem = ({ label, data }: { label: string; data: any }) => {
           ))}
         </Collapse>
       )}
+
+      {/* When the data is not an object, we render the value */}
+      {!isObject && (
+        <Typography sx={{ fontFamily: "monospace", fontSize: 12 }}>
+          {`${label.toUpperCase()}: ${String(data).toUpperCase()}`}
+        </Typography>
+      )}
     </Box>
   );
 };
 
-export const PacketItem = ({ packet }: PacketItemProps) => {
+
+
+
+export const PacketItem = ({ packet, index }: PacketItemProps) => {
   const [open, setOpen] = useState(false);
 
-  const directionIcon =
-    packet.direction === "incoming" ? "material-symbols:arrow-downward" : "material-symbols:arrow-upward";
+  const isIncomingReq = packet.direction === "incoming"
 
-  return (
-    <Box sx={{ width: "100%" }}>
-      <Button
-        fullWidth
-        variant="contained"
-        color={packet.direction === "incoming" ? "success" : "primary"}
-        onClick={() => setOpen(!open)}
-        endIcon={<Icon icon={open ? "solar:chevron-up-bold" : "solar:chevron-down-bold"} />}
-        sx={{
-          justifyContent: "space-between",
-          textTransform: "none",
-          py: 1,
-          mb: 0.5,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Icon icon={directionIcon} width={20} height={20} color={packet.direction == "incoming" ? "primary" : "success"} />
-          <Typography sx={{ fontFamily: "monospace" }}>
-            {packet.time}
+  const directionIcon = isIncomingReq ? 'material-symbols:arrow-downward' : 'material-symbols:arrow-upward';
+  const backgroundColor = isIncomingReq ? '#3498db' : '#2ecc71';
+
+    const getEthernetDetails = ()=>{
+      if (packet.ethernet)
+       return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', pr: 2 }}>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <strong>SRC MAC:</strong> {packet.ethernet.src_mac.toUpperCase()}
+          </Typography>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <strong>DST MAC:</strong> {packet.ethernet.dst_mac.toUpperCase()}
           </Typography>
         </Box>
-        <Typography sx={{ fontFamily: "monospace", fontSize: 12 }}>{packet.time}</Typography>
-      </Button>
+      );
+    }
+
+  const getIpDetails = () => {
+    if (packet.ipv4) {
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', pr: 2 }}>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <strong>SRC IP:</strong> {packet.ipv4.src_ip.toUpperCase()}
+          </Typography>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <strong>DST IP:</strong> {packet.ipv4.dst_ip.toUpperCase()}
+          </Typography>
+        </Box>
+      );
+    }
+    if (packet.ipv6) {
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', pr: 2 }}>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <strong>SRC IP:</strong> {packet.ipv6.src_ip.toUpperCase()}
+          </Typography>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <strong>DST IP:</strong> {packet.ipv6.dst_ip.toUpperCase()}
+          </Typography>
+        </Box>
+      );
+    }
+    return null;
+  };
+
+  const getTcpUdpDetails = () => {
+    if (packet.tcp) {
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', pr: 2 }}>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <strong>SRC PORT:</strong> {packet.tcp.src_port}
+          </Typography>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <strong>DST PORT:</strong> {packet.tcp.dst_port}
+          </Typography>
+        </Box>
+      );
+    }
+    if (packet.udp) {
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', pr: 2 }}>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <strong>SRC Port:</strong> {packet.udp.src_port}
+          </Typography>
+          <Typography sx={{ fontFamily: 'monospace', fontSize: 12 }}>
+            <strong>DST Port:</strong> {packet.udp.dst_port}
+          </Typography>
+        </Box>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <Box sx={{ width: '100%', mb: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'start',
+          alignItems: 'center',
+          padding: '8px 16px',
+          backgroundColor: '#1f2327',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          border: '1px solid #30363d',
+          gap: 1
+        }}
+        onClick={() => setOpen(!open)}
+      >
+        <Typography
+          sx={{
+            fontFamily: 'monospace',
+            fontSize: 12,
+            width: '5%',
+            color: 'gray',
+            borderRightWidth: 1,
+            borderRightColor: 'white',
+            textAlign: 'center'
+          }}
+        >
+          #{index + 1}
+        </Typography>
+        <Icon
+          icon={directionIcon}
+          width={20}
+          height={20}
+          color={backgroundColor}
+        />
+        <Typography sx={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 'bold', width: '12%' }}>
+          {packet.timestamp}
+        </Typography>
+        {getEthernetDetails()}
+        {getIpDetails()}
+        {getTcpUdpDetails()}
+      </Box>
 
       <Collapse in={open} timeout="auto" unmountOnExit>
-        <Box sx={{ pl: 2 }}>
-          {packet.ethernet && <LayerItem label="Ethernet" data={packet.ethernet} />}
+        <Box sx={{ pl: 2, pt: 1 }}>
+          {packet.ethernet && <LayerItem label="ETHERNET" data={packet.ethernet} />}
           {packet.ipv4 && <LayerItem label="IPv4" data={packet.ipv4} />}
           {packet.ipv6 && <LayerItem label="IPv6" data={packet.ipv6} />}
           {packet.tcp && <LayerItem label="TCP" data={packet.tcp} />}
@@ -93,7 +202,7 @@ export const PacketItem = ({ packet }: PacketItemProps) => {
         </Box>
       </Collapse>
 
-      <Divider sx={{ my: 0.5, bgcolor: "#30363d" }} />
+      <Divider sx={{ my: 0.5, bgcolor: '#30363d' }} />
     </Box>
   );
 };
