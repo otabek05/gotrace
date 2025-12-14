@@ -2,19 +2,17 @@ package main
 
 import (
 	"fmt"
-	"gotracer/internal/ws"
+	"gotracer/internal/api"
 	"log"
 	"net/http"
 )
 
 
 func main() {
-	go ws.DefaultHub.Run()
 
-	http.HandleFunc("/ws", ws.DefaultHub.ServeWS)
-
-	fmt.Println("Server is running on port : 8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	router := api.NewRouter()
+	fmt.Println("Server is starting on port 8080")
+	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -39,7 +39,7 @@ export interface WSOutgoingMessage {
   trafficOptions?: TrafficOptions;
   networkLayer?: NetworkLayer;
   transport?: TransportLayer;
-  services:any;
+  services:string[];
 
   isOutgoing: true;
 }

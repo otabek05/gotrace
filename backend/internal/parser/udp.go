@@ -2,7 +2,6 @@ package parser
 
 import (
 	"gotracer/internal/model"
-
 	"github.com/google/gopacket/layers"
 )
 

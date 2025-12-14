@@ -20,7 +20,7 @@ func (e *Engine) loop(wsChan *chan []byte, localIpAdd string) {
 	var bytesIn, bytesOut uint64
 	for p := range src.Packets() {
 		var parsedLayers model.ParsedPacket
-		parsedLayers.TimeStamp = time.Now().Format("2006-01-02 15:04:05")
+		parsedLayers.TimeStamp = time.Now().Format("2006-01-02 15:04:05.000")
 
 		network := p.NetworkLayer()
 		if network == nil {

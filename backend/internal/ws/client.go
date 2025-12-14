@@ -19,7 +19,6 @@ type Client struct {
 func (c *Client) read() {
 	defer func() {
 		DefaultHub.unregister <- c
-		c.conn.Close()
 	}()
 
 	for {
@@ -37,6 +36,7 @@ func (c *Client) read() {
 
 		switch wsMessage.Type {
 		case "start_capturing":
+			c.engine.Stop()
 			c.engine.Start(&c.Send)
 		case "Stop":
 			c.engine.Stop()
@@ -56,6 +56,7 @@ func (c *Client) write() {
 }
 
 func (c *Client) stop() {
+	c.conn.Close()
 	c.engine.Stop()
 	close(c.Send)
 }

@@ -9,7 +9,6 @@ export interface ServiceSelectProps {
 }
 
 export const ServiceSelect: React.FC<ServiceSelectProps> = ({ options, addService,selectedServices }) => {
-  //const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement | null>(null);
 

@@ -22,16 +22,21 @@ import { ServiceSelect } from "./service_select";
 import { Iconify } from "src/components/iconify";
 import SearchInputWithButton from "src/components/option/SearchInput";
 import { validatePort } from "src/utils/valid_port";
+import { NetworkInterface } from "src/types/net_interface";
+
 
 
 export default function OverviewAnalyticsView() {
   const { connected, messages, send, connect, clearMessages } = useWebSocket();
+  const [interfaces, setInterfaces] = useState<NetworkInterface[]>([])
+  //const [selectedInterface, set]
   const [trafficOption, setTrafficOption] = useState<TrafficOptions>(TrafficOptions.Both);
   const [networkLayer, setNetworkLayer] = useState<NetworkLayer>(NetworkLayer.Unknown);
   const [transportLayer, setTransportLayer] = useState<TransportLayer>(TransportLayer.Unknown);
   const [applicationLayer, setApplicationLayer] = useState<ApplicationLayer>(ApplicationLayer.Any)
   const [selectedServices, setSelectedServices] = useState<Service[]>([])
   const [customInput, setCustomInput] = useState<string>("")
+
 
 
   useEffect(() => {
@@ -44,7 +49,7 @@ export default function OverviewAnalyticsView() {
       trafficOptions: trafficOption,
       networkLayer,
       transport: transportLayer,
-      services: "",
+      services: buildServices(),
       isOutgoing: true,
     });
   };
@@ -56,17 +61,15 @@ export default function OverviewAnalyticsView() {
       return;
     }
 
-    if (!validatePort(service.value)) {
+    if (!validatePort(service.value)) 
       return
-    }
+    
 
     setSelectedServices((prev) => {
       const exist = prev.some((s) => s.value === service.value)
-
-      if (!exist) {
+      if (!exist) 
         return [...prev, service]
-      }
-
+      
       return prev
     })
   }
@@ -85,6 +88,11 @@ export default function OverviewAnalyticsView() {
     addService(newService)
     setCustomInput("")
   }
+
+  const buildServices = (): string[] => {
+    return selectedServices.map(service => service.value)
+  }
+
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column" }}>
