@@ -15,4 +15,11 @@ type WSReceiveMessage struct {
 type WSSendingMessage struct {
 	Type    string        `json:"type"`
 	Packets *ParsedPacket `json:"packets,omitempty"`
+	InternetSpeed *InternetSpeed `json:"internetSpeed"`
+}
+
+
+type InternetSpeed struct {
+	BytesIn string `json:"bytesIn"`
+	BytesOut  string `json:"bytesOut"`
 }

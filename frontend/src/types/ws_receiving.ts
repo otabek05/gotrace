@@ -1,6 +1,12 @@
 export interface WSReceiving {
   type: string;
   packets?: ParsedPacket;
+  internetSpeed?: InternetSpeed
+}
+
+export  interface InternetSpeed {
+  bytesIn:string 
+  bytesOut:string
 }
 
 export interface ParsedPacket {

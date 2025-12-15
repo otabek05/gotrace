@@ -6,52 +6,50 @@ import (
 	"gotracer/internal/parser"
 	"strings"
 
-	"github.com/google/gopacket"
+	//"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
+	"github.com/gorilla/websocket"
 )
-
 
 type Engine struct {
 	handle *pcap.Handle
-	packet chan gopacket.Packet
+	conn   *websocket.Conn
 	parser *parser.PacketParser
-	isStarted bool
 }
 
-func New() *Engine {
+func New(conn *websocket.Conn) *Engine {
 
 	return &Engine{
-		packet: make(chan gopacket.Packet, 200),
+		//	packet: make(chan gopacket.Packet, 200),
 		parser: parser.New(),
+		conn: conn,
 	}
 }
 
-func (e *Engine) Start(wsChan *chan []byte, msg *model.WSReceiveMessage) error {
-	ifaces, _ := pcap.FindAllDevs()
-	iface := ifaces[0]
-
+func (e *Engine) Start(msg *model.WSReceiveMessage) error {
 	h, err := pcap.OpenLive(msg.NetworkInterface.Name, 65535, true, pcap.BlockForever)
 	if err != nil {
 		return err
 	}
 
-	 
-
 	e.handle = h
-	//e.handle.SetBPFFilter("tcp and port 80")
-	e.handle.SetBPFFilter(buildBPFFilter(msg))
-	go e.loop(wsChan, string(iface.Addresses[0].IP))
-	e.isStarted = true
+	filters := buildBPFFilter(msg)
+	if filters != "" {
+		e.handle.SetBPFFilter(filters)
+	}
+
+	isOutgoingTraffic := msg.TrafficOptions == string(model.OUTGOING)
+	isIncomingTraffic := msg.TrafficOptions == string(model.INCOMING)
+	go e.loop(msg.NetworkInterface.Addresses[0].IP, isIncomingTraffic, isOutgoingTraffic)
 
 	return nil
 }
 
-
-func buildBPFFilter(msg *model.WSReceiveMessage) string  {
+func buildBPFFilter(msg *model.WSReceiveMessage) string {
 	var filters []string
 
 	switch msg.Transport {
-	case "tcp" , "udp":
+	case "tcp", "udp":
 		filters = append(filters, msg.Transport)
 	}
 
@@ -79,6 +77,6 @@ func buildBPFFilter(msg *model.WSReceiveMessage) string  {
 }
 
 
-func (e *Engine) IsRunning() bool {
-	return e.isStarted
+func (e *Engine) write(buff []byte) error {
+	return  e.conn.WriteMessage(websocket.TextMessage, buff)
 }

@@ -41,8 +41,8 @@ export interface WSOutgoingMessage {
   trafficOptions?: TrafficOptions;
   networkLayer?: NetworkLayer;
   transport?: TransportLayer;
-  interface: NetworkInterface
-  services:string[];
+  interface?: NetworkInterface
+  services?:string[];
 }
 
 export interface WSIncomingMessage {

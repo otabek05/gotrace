@@ -24,7 +24,7 @@ func (c *Client) read() {
 	for {
 		_, msg, err := c.conn.ReadMessage()
 		if err != nil {
-			break
+			return
 		}
 
 		var wsMessage model.WSReceiveMessage
@@ -36,11 +36,8 @@ func (c *Client) read() {
 
 		switch wsMessage.Type {
 		case "start_capturing":
-			if c.engine.IsRunning() {
-				c.engine.Stop()
-			}
-
-			c.engine.Start(&c.Send, &wsMessage)
+			c.engine.Stop()
+			c.engine.Start(&wsMessage)
 		case "Stop":
 			c.engine.Stop()
 		}
@@ -48,6 +45,7 @@ func (c *Client) read() {
 		fmt.Println(wsMessage)
 	}
 }
+
 
 func (c *Client) write() {
 	for msg := range c.Send {

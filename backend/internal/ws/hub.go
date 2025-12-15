@@ -10,7 +10,6 @@ import (
 )
 
 
-
 type Hub struct {
     clients []Client
 	register chan *Client
@@ -36,7 +35,8 @@ func (h *Hub) Run() {
 			fmt.Println("client connected: ", client.IP)
 		case client := <- h.unregister:
 			client.stop()
-			print("client disconnected: ", client.IP)
+			h.removeClient(client)
+			fmt.Println("client disconnected: ", client.IP)
 
 		}
 	}
@@ -56,7 +56,7 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 
 	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 
-	engine := capture.New()
+	engine := capture.New(conn)
 
 	client := &Client{
 		conn: conn,
@@ -68,7 +68,13 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request) {
 	h.register <- client
 
 	go client.read()
-	go client.write()
 	
 }
 
+func (h *Hub) removeClient( client *Client) {
+	for i, c := range h.clients {
+		if c == *client {
+			h.clients = append(h.clients[:i], h.clients[i+1:]... )
+		}
+	}
+}

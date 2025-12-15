@@ -29,7 +29,7 @@ import { NetSelector } from "./netSelector";
 
 
 export default function OverviewAnalyticsView() {
-  const { connected, messages, send, connect, clearMessages } = useWebSocket();
+  const { connected, messages, send, clearMessages } = useWebSocket();
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([])
   const [selectedInterface, setSelectedInterface] = useState<NetworkInterface | null>(null)
   const [trafficOption, setTrafficOption] = useState<TrafficOptions>(TrafficOptions.Both);
@@ -42,10 +42,6 @@ export default function OverviewAnalyticsView() {
   useEffect(()=>{
     fetchNetInterfaces()
   },[])
-
-  useEffect(() => {
-   if (selectedServices) connect("ws://localhost:8080/ws");
-  }, [selectedServices]);
 
   const handleApply = () => {
     send({
@@ -232,6 +228,7 @@ export default function OverviewAnalyticsView() {
         sx={{
           p: 2,
           mt: 1,
+          width:"40%",
           flexGrow: 1,
           maxHeight: "75vh",
           overflowY: "auto",

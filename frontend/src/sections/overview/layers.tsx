@@ -2,7 +2,6 @@ import {
   Box,
   Typography,
   Collapse,
-  Divider,
 } from "@mui/material";
 import { useState } from "react";
 import { ParsedPacket } from "src/types/ws_receiving";
@@ -177,12 +176,15 @@ export const PacketItem = ({ packet, index }: PacketItemProps) => {
           height={20}
           color={backgroundColor}
         />
-        <Typography sx={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 'bold', width: '12%' }}>
+        <Typography sx={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 'bold' }}>
           {packet.timestamp}
         </Typography>
+
+        {/*  
         {getEthernetDetails()}
         {getIpDetails()}
         {getTcpUdpDetails()}
+        */}
       </Box>
 
       <Collapse in={open} timeout="auto" unmountOnExit>
@@ -202,7 +204,6 @@ export const PacketItem = ({ packet, index }: PacketItemProps) => {
         </Box>
       </Collapse>
 
-      <Divider sx={{ my: 0.5, bgcolor: '#30363d' }} />
     </Box>
   );
 };
