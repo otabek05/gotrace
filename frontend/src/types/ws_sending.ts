@@ -1,3 +1,5 @@
+import { NetworkInterface } from "./net_interface";
+
 export enum MessageType {
   StartCapturing = "start_capturing",
   StopCapturing = "stop_capturing",
@@ -39,9 +41,8 @@ export interface WSOutgoingMessage {
   trafficOptions?: TrafficOptions;
   networkLayer?: NetworkLayer;
   transport?: TransportLayer;
+  interface: NetworkInterface
   services:string[];
-
-  isOutgoing: true;
 }
 
 export interface WSIncomingMessage {

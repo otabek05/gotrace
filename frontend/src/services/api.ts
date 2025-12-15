@@ -52,9 +52,7 @@ axiosWithToken?.interceptors.response.use(
         if (error.response && error.response.status === 403 && !originalRequest._retry) {
             if (!isRefreshing) {
                 isRefreshing = true
-                originalRequest._retry = true;
-            
-                // Attempt to refresh the token
+                originalRequest._retry = true
                 try {
                     const refresh_token = Cookies.get("refresh_token")
                     const response = await axiosWithoutToken.post("/api/v1/auth/refresh-token", {

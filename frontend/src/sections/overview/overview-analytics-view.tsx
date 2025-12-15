@@ -18,18 +18,20 @@ import {
 import { PacketItem } from "./layers";
 import { CustomSelect } from "src/components/option/CustomSelect";
 import { applicationLayerOptions, networkLayerOptions, Service, trafficOptions, transportLayerOptions, wellKnownServicesOptions } from "src/constansts/capture";
-import { ServiceSelect } from "./service_select";
+import { ServiceSelect } from "./serviceSelector";
 import { Iconify } from "src/components/iconify";
 import SearchInputWithButton from "src/components/option/SearchInput";
 import { validatePort } from "src/utils/valid_port";
 import { NetworkInterface } from "src/types/net_interface";
+import { getNetworkInterfaces } from "src/services/networkService";
+import { NetSelector } from "./netSelector";
 
 
 
 export default function OverviewAnalyticsView() {
   const { connected, messages, send, connect, clearMessages } = useWebSocket();
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([])
-  //const [selectedInterface, set]
+  const [selectedInterface, setSelectedInterface] = useState<NetworkInterface | null>(null)
   const [trafficOption, setTrafficOption] = useState<TrafficOptions>(TrafficOptions.Both);
   const [networkLayer, setNetworkLayer] = useState<NetworkLayer>(NetworkLayer.Unknown);
   const [transportLayer, setTransportLayer] = useState<TransportLayer>(TransportLayer.Unknown);
@@ -37,11 +39,13 @@ export default function OverviewAnalyticsView() {
   const [selectedServices, setSelectedServices] = useState<Service[]>([])
   const [customInput, setCustomInput] = useState<string>("")
 
-
+  useEffect(()=>{
+    fetchNetInterfaces()
+  },[])
 
   useEffect(() => {
-    connect("ws://localhost:8080/ws");
-  }, []);
+   if (selectedServices) connect("ws://localhost:8080/ws");
+  }, [selectedServices]);
 
   const handleApply = () => {
     send({
@@ -50,7 +54,7 @@ export default function OverviewAnalyticsView() {
       networkLayer,
       transport: transportLayer,
       services: buildServices(),
-      isOutgoing: true,
+      interface: selectedInterface!
     });
   };
 
@@ -93,6 +97,16 @@ export default function OverviewAnalyticsView() {
     return selectedServices.map(service => service.value)
   }
 
+  const fetchNetInterfaces = async()=>{
+    const response =  await  getNetworkInterfaces()
+    if (response instanceof Error) {
+      alert(response.message)
+      return 
+    }
+
+    setInterfaces(response)
+    setSelectedInterface(response[0])
+  }
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column" }}>
@@ -107,6 +121,15 @@ export default function OverviewAnalyticsView() {
           pb: 2,
         }}
       >
+
+        <NetSelector 
+          label="Network Interface"
+          interfaces={interfaces}
+          value={selectedInterface}
+          onChange={setSelectedInterface}
+        />
+
+
 
         <CustomSelect
           label="Traffic"
@@ -156,7 +179,7 @@ export default function OverviewAnalyticsView() {
           : applicationLayer == ApplicationLayer.Custom ? (
             <>
 
-              <SearchInputWithButton onChange={(val) => { setCustomInput(val) }} onSearch={onSearch} value={customInput} />
+              <SearchInputWithButton onChange={(val:string) => { setCustomInput(val) }} onSearch={onSearch} value={customInput} />
             </>
           ) : null}
 

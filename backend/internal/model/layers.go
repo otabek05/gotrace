@@ -140,5 +140,5 @@ type DHCP struct {
 
 type AppLayer struct {
     Protocol string      `json:"protocol"`
-    Data     interface{} `json:"data"`
+    Data     any `json:"data"`
 }

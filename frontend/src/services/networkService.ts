@@ -1,13 +1,13 @@
 import { ApiResponse } from "src/types/api";
 import { NetworkInterface } from "src/types/net_interface";
 import { axiosWithToken } from "./api";
+import { handleError } from "./error";
 
-export const fetchNetworkInterfaces = async (): Promise<NetworkInterface[]> => {
+export const getNetworkInterfaces = async (): Promise<NetworkInterface[] | Error> => {
   try {
-    const response = await axiosWithToken.get<ApiResponse<NetworkInterface[]>>("/api/v1/network/interfaces");
+    const response = await axiosWithToken.get<ApiResponse<NetworkInterface[]>>("/api/v1/interfaces");
     return response.data.data;
   } catch (error) {
-    console.error("Failed to fetch network interfaces:", error);
-    throw error;
+    return handleError(error)
   }
 };

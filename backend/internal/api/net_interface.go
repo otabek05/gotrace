@@ -13,6 +13,25 @@ func NetInterfaceHandler(w http.ResponseWriter, r *http.Request) {
 		return 
 	}
 
-	Success(w, ifaces, "")
+	var result []pcap.Interface
+
+	for _, iface := range ifaces {
+		hasIp := false
+
+		for _, addr  := range iface.Addresses {
+			if addr.IP != nil {
+				hasIp = true
+				break
+			}
+		}
+
+		if !hasIp{
+			continue
+		}
+
+		result = append(result, iface)
+	}
+
+	Success(w, result, "")
 
 }

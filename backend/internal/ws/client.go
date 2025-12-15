@@ -36,8 +36,11 @@ func (c *Client) read() {
 
 		switch wsMessage.Type {
 		case "start_capturing":
-			c.engine.Stop()
-			c.engine.Start(&c.Send)
+			if c.engine.IsRunning() {
+				c.engine.Stop()
+			}
+
+			c.engine.Start(&c.Send, &wsMessage)
 		case "Stop":
 			c.engine.Stop()
 		}

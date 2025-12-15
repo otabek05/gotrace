@@ -5,8 +5,8 @@ import {
   Divider,
 } from "@mui/material";
 import { useState } from "react";
-import { Icon } from "@iconify/react";
 import { ParsedPacket } from "src/types/ws_receiving";
+import { Iconify } from "src/components/iconify";
 
 interface PacketItemProps {
   packet: ParsedPacket;
@@ -37,7 +37,7 @@ const LayerItem = ({ label, data }: { label: string; data: any }) => {
             <Typography variant="body2" sx={{ fontWeight: "bold" }}>
               {label.toUpperCase()}
             </Typography>
-            <Icon icon={directionIcon} />
+            <Iconify icon={directionIcon} />
           </>
         )}
       </Box>
@@ -171,7 +171,7 @@ export const PacketItem = ({ packet, index }: PacketItemProps) => {
         >
           #{index + 1}
         </Typography>
-        <Icon
+        <Iconify
           icon={directionIcon}
           width={20}
           height={20}
