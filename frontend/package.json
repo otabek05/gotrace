@@ -37,17 +37,16 @@
     "js-cookie": "^3.0.5",
     "minimal-shared": "^1.0.7",
     "react": "^19.1.0",
-    "react-apexcharts": "^1.7.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.4.1",
     "simplebar-react": "^3.3.0"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^22.19.3",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.1",
     "@vitejs/plugin-react-swc": "^3.8.1",
-    "@types/js-cookie": "^3.0.6",
     "globals": "^16.0.0",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.29.0",
