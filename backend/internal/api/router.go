@@ -14,3 +14,4 @@ func NewRouter() http.Handler {
 	mux.HandleFunc("/api/v1/network/interfaces", NetInterfaceHandler)
 	return withCORS(mux)
 }
+
