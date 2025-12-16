@@ -5,6 +5,7 @@ import (
 	"gotracer/internal/model"
 	"gotracer/internal/parser"
 	"strings"
+	"sync"
 
 	//"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
@@ -15,12 +16,13 @@ type Engine struct {
 	handle *pcap.Handle
 	conn   *websocket.Conn
 	parser *parser.PacketParser
+	mux *sync.Mutex
 }
 
 func New(conn *websocket.Conn) *Engine {
 
 	return &Engine{
-		//	packet: make(chan gopacket.Packet, 200),
+		mux: &sync.Mutex{},
 		parser: parser.New(),
 		conn: conn,
 	}
@@ -78,5 +80,7 @@ func buildBPFFilter(msg *model.WSReceiveMessage) string {
 
 
 func (e *Engine) write(buff []byte) error {
+	e.mux.Lock()
+	defer e.mux.Unlock()
 	return  e.conn.WriteMessage(websocket.TextMessage, buff)
 }

@@ -106,6 +106,11 @@ func (e *Engine) loop(ifaceAddr net.IP, incomingDirection, outgoingDirection boo
 			payload := app.Payload()
 			if isHTTPPayload(payload) {
 				e.parser.ParseHTTP(payload, &parsedLayers)
+			}else {
+				parsedLayers.App = &model.AppLayer{
+					Data: payload,
+					
+				}
 			}
 		}
 

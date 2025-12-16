@@ -17,14 +17,29 @@ const menuItems = [
     icon: "mdi:lan-connect",
     color: "#2196f3",
   },
+
   {
-    label: "Nmap",
+    label: "LAN",
+    path: "/port-scan",
+    icon: "mdi:lan-connect",
+    color: "#2196f3",
+  },
+
+  {
+    label: "OS",
+    path: "/port-scan",
+    icon: "mdi:lan-connect",
+    color: "#2196f3",
+  },
+
+  {
+    label: "Wifi",
     path: "/nmap",
     icon: "mdi:radar",
     color: "#ff9800",
   },
   {
-    label: "Tools",
+    label: "Other Tools",
     path: "/tools",
     icon: "mdi:tools",
     color: "#9c27b0",
