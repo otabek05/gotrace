@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-
 	"github.com/google/gopacket/pcap"
 )
 
@@ -33,5 +32,4 @@ func NetInterfaceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	Success(w, result, "")
-
 }

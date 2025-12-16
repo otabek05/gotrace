@@ -107,9 +107,11 @@ const ToolItem = styled(Box, {
   transform: active ? "scale(1.05)" : "scale(1)",
   transition:
     "transform 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease",
+    /*
   boxShadow: active
     ? `0 0 12px ${color}55`
     : "none",
+    */
   "&:hover": {
     backgroundColor: "rgba(255,255,255,0.1)",
     transform: "scale(1.08)",

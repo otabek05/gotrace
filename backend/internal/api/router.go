@@ -12,6 +12,9 @@ func NewRouter() http.Handler {
 		
 	mux.HandleFunc("/ws", ws.DefaultHub.ServeWS)
 	mux.HandleFunc("/api/v1/network/interfaces", NetInterfaceHandler)
+
+	mux.Handle("/", spaHandler("../../build/web"))
+
 	return withCORS(mux)
 }
 
