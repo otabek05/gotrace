@@ -20,6 +20,7 @@ import { PacketItem } from "./Layers";
 import SearchInputWithButton from "../../components/options/SearchInput";
 import { Icon } from "@iconify/react";
 import SpeedIndicator from "./SpeedIndicator";
+import { isIPV4 } from "../../utils/validateIP";
 
 
 export default function CaptureView() {
@@ -36,15 +37,19 @@ export default function CaptureView() {
   const [selectedIP, setSelectedIP] = useState<string>("")
 
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchNetInterfaces()
-  },[])
+  }, [])
 
-  const handleApply = async() => {
+  const handleApply = async () => {
 
-    let selectedIPAddress = ""
-    if (domain !== "") {
-      const response  = await getIPFromDomain(domain)
+    let selectedIPAddress = domain
+    if (domain !== "" && !isIPV4(domain)) {
+      const response = await getIPFromDomain(domain)
+      if (!response.isSuccess()) {
+        console.log(response)
+        return 
+      }
       selectedIPAddress = response.data ? response.data![0] : ""
     }
 
@@ -53,7 +58,7 @@ export default function CaptureView() {
       trafficOptions: trafficOption,
       networkLayer,
       transport: transportLayer,
-      services: applicationLayer != "any" ? buildServices(): null,
+      services: applicationLayer != "any" ? buildServices() : null,
       interface: selectedInterface!,
       ipv4: selectedIPAddress != "" ? selectedIPAddress : null
     });
@@ -66,15 +71,15 @@ export default function CaptureView() {
       return;
     }
 
-    if (!validatePort(service.value)) 
+    if (!validatePort(service.value))
       return
-    
+
 
     setSelectedServices((prev) => {
       const exist = prev.some((s) => s.value === service.value)
-      if (!exist) 
+      if (!exist)
         return [...prev, service]
-      
+
       return prev
     })
   }
@@ -98,11 +103,11 @@ export default function CaptureView() {
     return selectedServices.map(service => service.value)
   }
 
-  const fetchNetInterfaces = async()=>{
-    const response =  await  getNetworkInterfaces()
+  const fetchNetInterfaces = async () => {
+    const response = await getNetworkInterfaces()
     if (response instanceof Error) {
       alert(response.message)
-      return 
+      return
     }
 
     setInterfaces(response?.data ?? [])
@@ -123,20 +128,13 @@ export default function CaptureView() {
         }}
       >
 
-        <SearchInputWithButton 
-        placeholder="Filter By Domain"
-        onChange={(val:string) => { setDomain(val) }} 
-        onSearch={onSearch} 
-        value={domain} />
 
-        <NetSelector 
+        <NetSelector
           label="Network Interface"
           interfaces={interfaces}
           value={selectedInterface}
           onChange={setSelectedInterface}
         />
-
-
 
         <CustomSelect
           label="Traffic"
@@ -166,6 +164,12 @@ export default function CaptureView() {
           }}
         />
 
+        <SearchInputWithButton
+          placeholder="Filter By Domain or IP "
+          onChange={(val: string) => { setDomain(val) }}
+          value={domain} />
+
+
         <CustomSelect
           label="Application"
           options={ApplicationLayerList}
@@ -174,6 +178,7 @@ export default function CaptureView() {
             setApplicationLayer(val)
           }}
         />
+
 
         {applicationLayer == "well-known" ? (
           <>
@@ -185,17 +190,16 @@ export default function CaptureView() {
         )
           : applicationLayer == "custom" ? (
             <>
-
-              <SearchInputWithButton onChange={(val:string) => { setCustomInput(val) }} onSearch={onSearch} value={customInput} />
+              <SearchInputWithButton onChange={(val: string) => { setCustomInput(val) }} onSearch={onSearch} value={customInput} />
             </>
           ) : null}
 
 
         <Button variant="contained" onClick={handleApply}>
-          Apply
+          Start
         </Button>
 
-         <Button variant="contained" color="error"  onClick={stopCapturing}>
+        <Button variant="contained" color="error" onClick={stopCapturing}>
           Stop
         </Button>
 
@@ -238,16 +242,12 @@ export default function CaptureView() {
         WebSocket Status: {connected ? "🟢 Connected" : "🔴 Disconnected"}
       </Typography>
 
-      {speed != null && (
-        <SpeedIndicator speed={speed}/>
-      )}
-
       {/* PACKETS */}
       <Paper
         sx={{
           p: 2,
           mt: 1,
-          width:"40%",
+          width: "40%",
           flexGrow: 1,
           maxHeight: "75vh",
           overflowY: "auto",
