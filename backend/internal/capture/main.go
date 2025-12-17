@@ -1,7 +1,9 @@
 package capture
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"gotracer/internal/model"
 	"gotracer/internal/parser"
@@ -33,7 +35,7 @@ func New(conn *websocket.Conn) *Engine {
 
 func (e *Engine) Start(msg *model.WebSocketRX) error {
 	e.Stop()
-	
+
 	h, err := pcap.OpenLive(msg.NetworkInterface.Name, 65535, true, pcap.BlockForever)
 	if err != nil {
 		return err
@@ -86,8 +88,25 @@ func buildBPFFilter(msg *model.WebSocketRX) string {
 }
 
 
-func (e *Engine) write(buff []byte) error {
+func (e *Engine) Stop() {
+	if e.cancel != nil {
+		e.cancel()
+	}
+
+	if e.handle != nil {
+		e.handle.Close()
+	}
+}
+
+
+func (e *Engine) write(data any) error {
 	e.mux.Lock()
 	defer e.mux.Unlock()
-	return  e.conn.WriteMessage(websocket.TextMessage, buff)
+
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	enc.Encode(data)
+	
+	return  e.conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 }
